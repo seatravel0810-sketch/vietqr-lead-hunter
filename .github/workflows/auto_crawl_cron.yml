@@ -1,0 +1,35 @@
+name: VietQR Lead Hunter 24/7 Auto Crawler
+
+on:
+  schedule:
+    # Chạy tự động mỗi 6 tiếng một lần (00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    # Cho phép người dùng bấm nút "Run workflow" để cào thủ công trên GitHub bất kỳ lúc nào
+
+jobs:
+  crawl_and_sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: 1. Checkout mã nguồn
+        uses: actions/checkout@v4
+
+      - name: 2. Thiết lập môi trường Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 3. Cài đặt thư viện Playwright & PostgreSQL
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright psycopg2-binary
+          playwright install chromium --with-deps
+
+      - name: 4. Khởi chạy Cỗ máy cào Google Maps & Đồng bộ Supabase
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres.ugsirgcornvyoamvzuyy:VqHunter2026%21DbSecret@aws-1-ap-south-1.pooler.supabase.com:6543/postgres' }}
+        run: |
+          python scripts/cron_cloud_crawler.py

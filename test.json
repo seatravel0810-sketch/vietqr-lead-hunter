@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Spas Hanoi",
+    "category": "spa",
+    "phone": "+84976232322",
+    "location": "189 P. Hàng Bông, Hoàn Kiếm, Hà Nội 100000, Việt Nam",
+    "managerName": "Chủ tiệm",
+    "status": "new",
+    "demoSlug": "spas-hanoi",
+    "googleMapsUrl": "https://www.google.com/maps/place/Spas+Hanoi/data=!4m7!3m6!1s0x3135abbe3dd84709:0x691abf561febee8!8m2!3d21.0289242!4d105.8447502!16s%2Fg%2F11csbgr7by!19sChIJCUfYPb6rNTER6L7-YfWrkQY?authuser=0&hl=vi&g_ep=EgoyMDI2MTExNi4wIJJjKgBIAVAD&rclk=1",
+    "rating": 4.8,
+    "notes": "Tự động cào từ Google Maps (Spa Hoàn Kiếm)"
+  },
+  {
+    "name": "Orient Spa - Hanoi Old Quarter",
+    "category": "spa",
+    "phone": "+84866903499",
+    "location": "113 P. Hàng Bông, Hoàn Kiếm, Hà Nội 11006, Việt Nam",
+    "managerName": "Chủ tiệm",
+    "status": "new",
+    "demoSlug": "orient-spa---hanoi-old-quarter",
+    "googleMapsUrl": "https://www.google.com/maps/place/Orient+Spa+-+Hanoi+Old+Quarter/data=!4m7!3m6!1s0x3135ab57699de963:0x77e981398c403d!8m2!3d21.029688!4d105.846201!16s%2Fg%2F11t1jg135p!19sChIJY-mdaVerNTERPUCMOYHpdwA?authuser=0&hl=vi&g_ep=EgoyMDI2MTExNi4wIJJjKgBIAVAD&rclk=1",
+    "rating": 4.9,
+    "notes": "Tự động cào từ Google Maps (Spa Hoàn Kiếm)"
+  },
+  {
+    "name": "Orient Spa",
+    "category": "spa",
+    "phone": "+84916903499",
+    "location": "36 P. Phùng Hưng, Hoàn Kiếm, Hà Nội 100000, Việt Nam",
+    "managerName": "Chủ tiệm",
+    "status": "new",
+    "demoSlug": "orient-spa",
+    "googleMapsUrl": "https://www.google.com/maps/place/Orient+Spa/data=!4m7!3m6!1s0x3135ab33395c9c51:0xdbdb434e921521e1!8m2!3d21.0301231!4d105.8446594!16s%2Fg%2F11ypnys112!19sChIJUZxcOTOrNTER4SEVkk5D29s?authuser=0&hl=vi&g_ep=EgoyMDI2MTExNi4wIJJjKgBIAVAD&rclk=1",
+    "rating": 5.0,
+    "notes": "Tự động cào từ Google Maps (Spa Hoàn Kiếm)"
+  },
+  {
+    "name": "Hanoi Midori Spa 1",
+    "category": "spa",
+    "phone": "+842438266060",
+    "location": "60 Ng. Huyện, Hoàn Kiếm, Hà Nội, Việt Nam",
+    "managerName": "Chủ tiệm",
+    "status": "new",
+    "demoSlug": "hanoi-midori-spa-1",
+    "googleMapsUrl": "https://www.google.com/maps/place/Hanoi+Midori+Spa+1/data=!4m7!3m6!1s0x3135ab9591c64a35:0x7bf2c95f2ed3bf65!8m2!3d21.0293025!4d105.8480911!16s%2Fg%2F11b809hn1z!19sChIJNUrGkZWrNTERZb_TLl_J8ns?authuser=0&hl=vi&g_ep=EgoyMDI2MTExNi4wIJJjKgBIAVAD&rclk=1",
+    "rating": 4.6,
+    "notes": "Tự động cào từ Google Maps (Spa Hoàn Kiếm)"
+  },
+  {
+    "name": "Soleil Spa Hanoi",
+    "category": "spa",
+    "phone": "+842437191555",
+    "location": "211 P. Hàng Bông, Hoàn Kiếm, Hà Nội 100000, Việt Nam",
+    "managerName": "Chủ tiệm",
+    "status": "new",
+    "demoSlug": "soleil-spa-hanoi",
+    "googleMapsUrl": "https://www.google.com/maps/place/Soleil+Spa+Hanoi/data=!4m7!3m6!1s0x3135ab7c39158b8b:0xc7d65fac1209056c!8m2!3d21.0287952!4d105.8444792!16s%2Fg%2F11j00n8lp4!19sChIJi4sVOXyrNTERbAUJEqxf1sc?authuser=0&hl=vi&g_ep=EgoyMDI2MTExNi4wIJJjKgBIAVAD&rclk=1",
+    "rating": 4.9,
+    "notes": "Tự động cào từ Google Maps (Spa Hoàn Kiếm)"
+  }
+]

@@ -1,0 +1,144 @@
+{
+  "target": "https://vietqr-lead-hunter.vercel.app",
+  "total": 22,
+  "passed": 21,
+  "failed": 1,
+  "results": [
+    {
+      "name": "T1.1: Tải trang chủ HTTP 200",
+      "passed": true,
+      "details": "Status 200",
+      "severity": ""
+    },
+    {
+      "name": "T1.2: Hiển thị Logo, Tên app & Số dư Credits",
+      "passed": true,
+      "details": "vietqr.hunterPro MaxCỗ máy Săn Khách & Bóc Tách Dữ Liệu Goog",
+      "severity": ""
+    },
+    {
+      "name": "T1.3: Đầy đủ Form tìm kiếm (Ngành nghề, Từ khóa, Nút Quét)",
+      "passed": true,
+      "details": "",
+      "severity": ""
+    },
+    {
+      "name": "T2.1: Hiển thị bảng kết quả cho 'Spa Yên bái'",
+      "passed": true,
+      "details": "Số cơ sở hiển thị: 9",
+      "severity": ""
+    },
+    {
+      "name": "T2.2: 100% Cơ sở thuộc tỉnh Yên Bái (0 cơ sở Hà Nội)",
+      "passed": true,
+      "details": "9/9 chuẩn Yên Bái",
+      "severity": ""
+    },
+    {
+      "name": "T3.1: Lọc 'Chỉ SĐT Di Động (Zalo)'",
+      "passed": true,
+      "details": "9/9 cơ sở có số di động",
+      "severity": ""
+    },
+    {
+      "name": "T3.2: Tính chính xác nhãn Di động",
+      "passed": true,
+      "details": "",
+      "severity": ""
+    },
+    {
+      "name": "T3.3: Lọc 'Chưa Có Website (Cần Bán Web)'",
+      "passed": true,
+      "details": "9/9 cơ sở chưa có web",
+      "severity": ""
+    },
+    {
+      "name": "T3.4: Lọc 'Rating ≥ 4.8 (Cơ sở uy tín)'",
+      "passed": true,
+      "details": "9/9 cơ sở đạt rating cao",
+      "severity": ""
+    },
+    {
+      "name": "T3.5: Nút 'Đặt lại bộ lọc' hoạt động",
+      "passed": true,
+      "details": "Trả về đúng 9 cơ sở ban đầu",
+      "severity": ""
+    },
+    {
+      "name": "T4.1: Chọn tất cả (Select All) hiển thị badge số lượng",
+      "passed": true,
+      "details": "Đã chọn 9 cơ sở",
+      "severity": ""
+    },
+    {
+      "name": "T4.2: Bỏ chọn 1 dòng cập nhật đúng số lượng",
+      "passed": true,
+      "details": "Đã chọn 9 cơ sở -> Đã chọn 8 cơ sở",
+      "severity": ""
+    },
+    {
+      "name": "T4.3: Hủy chọn tất cả (Deselect All)",
+      "passed": true,
+      "details": "",
+      "severity": ""
+    },
+    {
+      "name": "T5.1: Mở Modal Xuất Excel thành công",
+      "passed": true,
+      "details": "",
+      "severity": ""
+    },
+    {
+      "name": "T5.2: Đóng Modal Xuất Excel khi bấm Hủy",
+      "passed": true,
+      "details": "",
+      "severity": ""
+    },
+    {
+      "name": "T6.1: Mở Outreach Modal thành công",
+      "passed": true,
+      "details": "",
+      "severity": ""
+    },
+    {
+      "name": "T7.1: Quét 'Spa hoàn kiếm' trả về đúng 20/20 cơ sở",
+      "passed": true,
+      "details": "Số lượng: 20",
+      "severity": ""
+    },
+    {
+      "name": "T8.1: Hiển thị thông báo Toast trung thực (không lấy bừa tỉnh khác)",
+      "passed": true,
+      "details": "Hiện tại chưa có dữ liệu cơ sở cho \"Spa Cà Mau\". Bạn hãy thử các khu vực đã có sẵn dữ liệu đầy đủ (như \"Spa Hoàn Kiếm\", \"Spa Cầu Giấy Hà Nội\", \"Nha khoa Quận 1 TP.HCM\", \"Hair Salon Đà Nẵng\", \"Spa Yên Bái\") hoặc khởi chạy cào thêm khu vực này.",
+      "severity": ""
+    },
+    {
+      "name": "T9.1: Giao diện di động co giãn tốt, không bị vỡ tràn chiều ngang",
+      "passed": true,
+      "details": "scrollWidth=375, clientWidth=375",
+      "severity": ""
+    },
+    {
+      "name": "T9.2: Form tìm kiếm hiển thị trọn vẹn trên Mobile",
+      "passed": true,
+      "details": "",
+      "severity": ""
+    },
+    {
+      "name": "T10.1: Không lọt ký tự LaTeX thô / escape / undefined",
+      "passed": true,
+      "details": "",
+      "severity": ""
+    },
+    {
+      "name": "T10.2: Console sạch",
+      "passed": false,
+      "details": "PageErrors: [] | ConsoleErrors: ['[error] Failed to load resource: the server responded with a status of 404 ()']",
+      "severity": "S4"
+    }
+  ],
+  "console_logs": [
+    "[error] Failed to load resource: the server responded with a status of 404 ()"
+  ],
+  "page_errors": []
+}

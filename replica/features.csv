@@ -1,0 +1,27 @@
+feature,area,priority,original,clone,notes
+Search by business category and location,search,must,yes,no,Core search input with autocomplete presets for 63 VN provinces
+Live Google Maps data extraction,crawler,must,yes,no,Extracts real-time name phone address rating reviews and maps URL
+Filter by phone availability (mobile vs landline),filtering,must,yes,no,Detects 09x 08x 07x 03x 05x VN mobile numbers for Zalo
+Filter by missing website (vết thương số),filtering,must,yes,no,Identifies high-revenue businesses with no digital storefront
+Interactive data table with pagination and sorting,data view,must,yes,no,Clean SaaS responsive table displaying scraped prospects
+Export prospects to Excel (.xlsx) and CSV,export,must,yes,no,One-click formatted export with contact details
+Export credit balance and consumption ledger,billing,must,yes,no,1 credit per exported prospect with transparent countdown
+Pre-export free live preview,data view,must,yes,no,Allows previewing search volume and sample cards before spending credits
+30-day duplicate export protection,billing,must,yes,no,Prevents charging twice for the same business listing within 30 days
+One-click Zalo direct outreach (zalo.me),outreach,must,no,no,VN killer feature opening native Zalo chat with personalized text
+Dynamic outreach script engine with lead variables,outreach,must,no,no,Auto-fills {name} {manager} {location} into sales templates
+Dynamic VietQR Napas247 subscription payment,billing,must,no,no,Instant credit activation via SePAY/PayOS webhook
+Filter by Google star rating threshold (>= 4.0 or < 4.0),filtering,should,yes,no,Enables targeting high-quality leads or bad-review recovery
+Batch select and bulk action on data table,data view,should,yes,no,Select all rows or page rows to batch export or outreach
+Detail drawer with 360-degree business view,data view,should,yes,no,Shows full address opening hours reviews breakdown and notes
+Custom notes and tags on individual leads,crm,should,yes,no,Add notes like Called no answer or Scheduled Zalo demo
+Local cache and pre-indexing database,performance,should,yes,no,Instant 0.2s search response for already indexed city niches
+Radius-based search filter (5km 10km 25km),search,should,yes,no,Allows geographical radius narrowing around business districts
+Kanban lead pipeline board (New Contacted Won Lost),crm,should,no,no,Visual lead stage management tailored for outbound sales teams
+Multiple outreach script templates (Web Ads SEO Software),outreach,should,no,no,Pre-built copy tested for Vietnamese business owners
+Polygon custom boundary map drawing,search,could,yes,no,Advanced geographic polygon selector (tier 4 feature in Scrap.io)
+CSV reverse lookup and contact enrichment,enrichment,could,yes,no,Upload an existing CSV of shops to enrich missing phone numbers
+Public REST API and MCP server support,integrations,could,yes,no,Allows AI agents or external CRMs to query leads via API
+User team member seats and role permissions,auth,could,yes,no,Multi-user accounts for agencies with multiple telesales agents
+Foreign country directories (France USA UK),coverage,skip,yes,no,Out of scope: 100% focused on Vietnamese 63 provinces
+Cold email delivery via international SMTP,outreach,skip,yes,no,Out of scope: Vietnamese local businesses do not read cold emails
