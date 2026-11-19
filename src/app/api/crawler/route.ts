@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { db } from '@/db';
 import { leads as leadsTable } from '@/db/schema';
-import { ilike, or, and, desc } from 'drizzle-orm';
+import { ilike, or, and, desc, sql } from 'drizzle-orm';
 
 const execAsync = promisify(exec);
 
@@ -176,14 +176,15 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // B. Lọc theo Địa phương (BẮT BUỘC mỗi token địa danh phải khớp trong địa chỉ hoặc thành phố):
+      // B. Lọc theo Địa phương (BẮT BUỘC mỗi token địa danh phải khớp trong địa chỉ hoặc thành phố, hỗ trợ cả có dấu và không dấu):
       if (locationTokens.length > 0) {
         for (const tok of locationTokens) {
+          const pat = `%${tok}%`;
           conditions.push(
             or(
-              ilike(leadsTable.address, `%${tok}%`),
-              ilike(leadsTable.city, `%${tok}%`),
-              ilike(leadsTable.name, `%${tok}%`)
+              sql`unaccent(${leadsTable.address}) ILIKE unaccent(${pat})`,
+              sql`unaccent(${leadsTable.city}) ILIKE unaccent(${pat})`,
+              sql`unaccent(${leadsTable.name}) ILIKE unaccent(${pat})`
             )
           );
         }
@@ -201,13 +202,14 @@ export async function POST(req: NextRequest) {
       } else {
         const words = query.trim().split(/\s+/).filter((w: string) => w.length > 1);
         if (words.length > 0) {
-          const generalConditions = words.map((w: string) =>
-            or(
-              ilike(leadsTable.name, `%${w}%`),
-              ilike(leadsTable.address, `%${w}%`),
-              ilike(leadsTable.city, `%${w}%`)
-            )
-          );
+          const generalConditions = words.map((w: string) => {
+            const pat = `%${w}%`;
+            return or(
+              sql`unaccent(${leadsTable.name}) ILIKE unaccent(${pat})`,
+              sql`unaccent(${leadsTable.address}) ILIKE unaccent(${pat})`,
+              sql`unaccent(${leadsTable.city}) ILIKE unaccent(${pat})`
+            );
+          });
           dbResults = await db
             .select()
             .from(leadsTable)
