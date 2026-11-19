@@ -30,6 +30,6 @@ jobs:
 
       - name: 4. Khởi chạy Cỗ máy cào Google Maps & Đồng bộ Supabase
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres.ugsirgcornvyoamvzuyy:VqHunter2026%21DbSecret@aws-1-ap-south-1.pooler.supabase.com:6543/postgres' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           python scripts/cron_cloud_crawler.py
