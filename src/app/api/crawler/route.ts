@@ -179,14 +179,25 @@ export async function POST(req: NextRequest) {
       // B. Lọc theo Địa phương (BẮT BUỘC mỗi token địa danh phải khớp trong địa chỉ hoặc thành phố, hỗ trợ cả có dấu và không dấu):
       if (locationTokens.length > 0) {
         for (const tok of locationTokens) {
-          const pat = `%${tok}%`;
-          conditions.push(
-            or(
-              sql`unaccent(${leadsTable.address}) ILIKE unaccent(${pat})`,
-              sql`unaccent(${leadsTable.city}) ILIKE unaccent(${pat})`,
-              sql`unaccent(${leadsTable.name}) ILIKE unaccent(${pat})`
-            )
-          );
+          if (tok.length <= 3) {
+            const regexPat = `\\m${tok}\\M`;
+            conditions.push(
+              or(
+                sql`unaccent(${leadsTable.address}) ~* unaccent(${regexPat})`,
+                sql`unaccent(${leadsTable.city}) ~* unaccent(${regexPat})`,
+                sql`unaccent(${leadsTable.name}) ~* unaccent(${regexPat})`
+              )
+            );
+          } else {
+            const pat = `%${tok}%`;
+            conditions.push(
+              or(
+                sql`unaccent(${leadsTable.address}) ILIKE unaccent(${pat})`,
+                sql`unaccent(${leadsTable.city}) ILIKE unaccent(${pat})`,
+                sql`unaccent(${leadsTable.name}) ILIKE unaccent(${pat})`
+              )
+            );
+          }
         }
       }
 

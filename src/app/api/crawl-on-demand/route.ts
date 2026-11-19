@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Vui lòng cung cấp từ khóa cần cào' }, { status: 400 });
     }
 
-    const githubToken = process.env.GITHUB_TOKEN;
+    const githubToken = (process.env.GITHUB_TOKEN || '').trim();
     const repoOwner = 'seatravel0810-sketch';
     const repoName = 'vietqr-lead-hunter';
 
