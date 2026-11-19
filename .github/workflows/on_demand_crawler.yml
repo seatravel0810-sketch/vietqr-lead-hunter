@@ -1,0 +1,40 @@
+name: VietQR On-Demand Realtime Crawler
+
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: 'Từ khóa tìm kiếm (Ví dụ: "cắt tóc Mường Khương", "spa Sapa", "nha khoa Sóc Trăng")'
+        required: true
+        type: string
+      limit:
+        description: 'Số lượng kết quả cần lấy (Mặc định: 20)'
+        required: false
+        default: '20'
+        type: string
+
+jobs:
+  crawl_on_demand:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 1. Checkout mã nguồn
+        uses: actions/checkout@v4
+
+      - name: 2. Thiết lập môi trường Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 3. Cài đặt Playwright & PostgreSQL
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install chromium --with-deps
+
+      - name: 4. Chạy cào trực tiếp từ Google Maps & Nạp Supabase
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          python scripts/on_demand_crawler.py --query "${{ inputs.query }}" --limit "${{ inputs.limit }}"

@@ -79,6 +79,12 @@ export default function HomePage() {
   const [isExporting, setIsExporting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Vệ tinh đám mây cào trực tiếp theo yêu cầu (On-Demand Realtime Scraper)
+  const [emptyQuery, setEmptyQuery] = useState<string | null>(null);
+  const [isTriggeringOnDemand, setIsTriggeringOnDemand] = useState(false);
+  const [onDemandProgress, setOnDemandProgress] = useState(0);
+  const [onDemandStatus, setOnDemandStatus] = useState('');
+
   // Provisioning state
   const [generatingDemoNames, setGeneratingDemoNames] = useState<Set<string>>(new Set());
   const selectAllRef = React.useRef<HTMLInputElement>(null);
@@ -124,11 +130,14 @@ export default function HomePage() {
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        showToast(data.error || 'Chưa tìm thấy cơ sở phù hợp.');
+      if (!res.ok || !data.leads || data.leads.length === 0) {
+        setEmptyQuery(query.trim());
+        setCrawledResults([]);
+        showToast(data.error || 'Chưa có sẵn dữ liệu cho khu vực này.');
         return;
       }
 
+      setEmptyQuery(null);
       const rawLeads: Lead[] = (data.leads || []).map((item: any, idx: number) => {
         const cleanPhone = (item.phone || '').replace(/[^0-9+]/g, '');
         const isMobile = /^(0|\+84)(9|8|7|3|5)[0-9]{8}$/.test(cleanPhone);
@@ -151,6 +160,56 @@ export default function HomePage() {
       clearTimeout(timer2);
       setIsSearching(false);
       setScanStep(0);
+    }
+  };
+
+  // 1.1 KÍCH HOẠT VỆ TINH ĐÁM MÂY CÀO GOOGLE MAPS THEO YÊU CẦU
+  const handleTriggerOnDemandCrawl = async () => {
+    if (!emptyQuery) return;
+    setIsTriggeringOnDemand(true);
+    setOnDemandProgress(5);
+    setOnDemandStatus('Đang kết nối vệ tinh đám mây GitHub Actions...');
+
+    try {
+      const res = await fetch('/api/crawl-on-demand', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: emptyQuery, limit: selectedLimit }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Không thể gửi lệnh cào');
+      }
+
+      showToast(`Đã kích hoạt vệ tinh cào trực tiếp cho "${emptyQuery}".`);
+
+      let currentPercent = 10;
+      const interval = setInterval(() => {
+        currentPercent += 5;
+        if (currentPercent < 40) {
+          setOnDemandStatus('Trình duyệt Playwright đang mở Google Maps & cuộn trang...');
+        } else if (currentPercent < 80) {
+          setOnDemandStatus('Đang bóc tách số điện thoại Zalo, rating và lưu Supabase...');
+        } else if (currentPercent < 95) {
+          setOnDemandStatus('Đang hoàn tất đồng bộ dữ liệu vào kho...');
+        }
+        setOnDemandProgress(Math.min(95, currentPercent));
+      }, 1200);
+
+      setTimeout(async () => {
+        clearInterval(interval);
+        setOnDemandProgress(100);
+        setOnDemandStatus('Hoàn tất! Đang tải danh sách cơ sở mới...');
+
+        setTimeout(async () => {
+          setIsTriggeringOnDemand(false);
+          await handleSearchAndCrawl();
+        }, 1500);
+      }, 25000);
+    } catch (err: any) {
+      alert('Lỗi kích hoạt cào tự động: ' + err.message);
+      setIsTriggeringOnDemand(false);
     }
   };
 
@@ -637,6 +696,57 @@ export default function HomePage() {
                 </button>
               )}
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* 4.5 ON-DEMAND REALTIME SATELLITE CRAWLER CARD */}
+      {emptyQuery && crawledResults.length === 0 && !isSearching && (
+        <section className="max-w-3xl mx-auto px-4 py-8">
+          <div className="glass-panel rounded-3xl border border-blue-200/90 bg-white/95 p-6 sm:p-8 text-center shadow-lg">
+            <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xs">
+              <Sparkles className="w-7 h-7 text-amber-500 animate-pulse" />
+            </div>
+            
+            <h3 className="font-extrabold text-lg text-slate-900 mb-2">
+              Khu vực &quot;{emptyQuery}&quot; chưa có sẵn trong kho dữ liệu
+            </h3>
+            
+            <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto mb-6 leading-relaxed">
+              Bạn có muốn kích hoạt cỗ máy vệ tinh đám mây để bóc tách trực tiếp số điện thoại Zalo, địa chỉ và rating của các cơ sở tại <b>&quot;{emptyQuery}&quot;</b> từ Google Maps ngay bây giờ không?
+            </p>
+
+            {isTriggeringOnDemand ? (
+              <div className="space-y-4 max-w-md mx-auto p-4 rounded-2xl bg-blue-50/70 border border-blue-100">
+                <div className="flex items-center justify-center gap-2.5 text-blue-700 font-extrabold text-xs sm:text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <span>{onDemandStatus}</span>
+                </div>
+                
+                {/* Progress bar */}
+                <div className="w-full bg-slate-200/80 rounded-full h-2.5 overflow-hidden border border-slate-200">
+                  <div
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2.5 transition-all duration-700 rounded-full"
+                    style={{ width: `${onDemandProgress}%` }}
+                  />
+                </div>
+                
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Máy chủ Ubuntu Cloud đang mở Playwright Chromium quét trực tiếp Google Maps... (~25 giây)
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleTriggerOnDemandCrawl}
+                  className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition active:scale-95 cursor-pointer inline-flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <span>⚡ Kích hoạt Cào Trực Tiếp Google Maps Ngay</span>
+                </button>
+              </div>
+            )}
           </div>
         </section>
       )}

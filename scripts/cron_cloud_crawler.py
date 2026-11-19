@@ -26,6 +26,13 @@ CRAWL_TARGETS = [
     ("Cắt tóc TP Cà Mau", "salon", "Hair Salon & Cắt tóc", "Cà Mau"),
     ("Cắt tóc TP Hạ Long", "salon", "Hair Salon & Cắt tóc", "Quảng Ninh"),
     ("Cắt tóc TP Đà Lạt", "salon", "Hair Salon & Cắt tóc", "Lâm Đồng"),
+    ("Cắt tóc TP Bắc Ninh", "salon", "Hair Salon & Cắt tóc", "Bắc Ninh"),
+    ("Cắt tóc TP Thanh Hóa", "salon", "Hair Salon & Cắt tóc", "Thanh Hóa"),
+    ("Cắt tóc TP Vinh Nghệ An", "salon", "Hair Salon & Cắt tóc", "Nghệ An"),
+    ("Cắt tóc TP Thái Nguyên", "salon", "Hair Salon & Cắt tóc", "Thái Nguyên"),
+    ("Cắt tóc TP Nam Định", "salon", "Hair Salon & Cắt tóc", "Nam Định"),
+    ("Cắt tóc Phú Quốc Kiên Giang", "salon", "Hair Salon & Cắt tóc", "Kiên Giang"),
+    ("Cắt tóc TP Quy Nhơn Bình Định", "salon", "Hair Salon & Cắt tóc", "Bình Định"),
 
     # 2. Spa & Thẩm mỹ viện & Dưỡng sinh
     ("Spa Hoàn Kiếm Hà Nội", "spa", "Spa & Thẩm mỹ viện", "Hà Nội"),
@@ -48,6 +55,16 @@ CRAWL_TARGETS = [
     ("Spa TP Đà Lạt", "spa", "Spa & Thẩm mỹ viện", "Lâm Đồng"),
     ("Spa TP Buôn Ma Thuột", "spa", "Spa & Thẩm mỹ viện", "Đắk Lắk"),
     ("Spa TP Cà Mau", "spa", "Spa & Thẩm mỹ viện", "Cà Mau"),
+    ("Spa TP Bắc Ninh", "spa", "Spa & Thẩm mỹ viện", "Bắc Ninh"),
+    ("Spa TP Thanh Hóa", "spa", "Spa & Thẩm mỹ viện", "Thanh Hóa"),
+    ("Spa TP Vinh Nghệ An", "spa", "Spa & Thẩm mỹ viện", "Nghệ An"),
+    ("Spa TP Thái Nguyên", "spa", "Spa & Thẩm mỹ viện", "Thái Nguyên"),
+    ("Spa Thị xã Sa Pa Lào Cai", "spa", "Spa & Thẩm mỹ viện", "Lào Cai"),
+    ("Spa TP Rạch Giá Kiên Giang", "spa", "Spa & Thẩm mỹ viện", "Kiên Giang"),
+    ("Spa TP Long Xuyên An Giang", "spa", "Spa & Thẩm mỹ viện", "An Giang"),
+    ("Spa TP Mỹ Tho Tiền Giang", "spa", "Spa & Thẩm mỹ viện", "Tiền Giang"),
+    ("Spa TP Bến Tre", "spa", "Spa & Thẩm mỹ viện", "Bến Tre"),
+    ("Spa TP Phan Thiết Bình Thuận", "spa", "Spa & Thẩm mỹ viện", "Bình Thuận"),
     
     # 3. Nha khoa & Răng hàm mặt
     ("Nha khoa Hoàn Kiếm Hà Nội", "dental", "Nha khoa & Răng hàm mặt", "Hà Nội"),
@@ -63,6 +80,9 @@ CRAWL_TARGETS = [
     ("Nha khoa TP Nha Trang", "dental", "Nha khoa & Răng hàm mặt", "Khánh Hòa"),
     ("Nha khoa TP Vũng Tàu", "dental", "Nha khoa & Răng hàm mặt", "Bà Rịa - Vũng Tàu"),
     ("Nha khoa TP Buôn Ma Thuột", "dental", "Nha khoa & Răng hàm mặt", "Đắk Lắk"),
+    ("Nha khoa TP Thanh Hóa", "dental", "Nha khoa & Răng hàm mặt", "Thanh Hóa"),
+    ("Nha khoa TP Vinh Nghệ An", "dental", "Nha khoa & Răng hàm mặt", "Nghệ An"),
+    ("Nha khoa TP Bắc Ninh", "dental", "Nha khoa & Răng hàm mặt", "Bắc Ninh"),
 
     # 4. Sân Thể thao (Pickleball, Cầu lông, Tennis)
     ("Sân Pickleball Cầu Giấy Hà Nội", "sports", "Sân Thể thao & Pickleball", "Hà Nội"),
@@ -72,6 +92,8 @@ CRAWL_TARGETS = [
     ("Sân Pickleball Hải Phòng", "sports", "Sân Thể thao & Pickleball", "Hải Phòng"),
     ("Sân Pickleball Cần Thơ", "sports", "Sân Thể thao & Pickleball", "Cần Thơ"),
     ("Sân Pickleball Nha Trang", "sports", "Sân Thể thao & Pickleball", "Khánh Hòa"),
+    ("Sân Pickleball Biên Hòa", "sports", "Sân Thể thao & Pickleball", "Đồng Nai"),
+    ("Sân Pickleball Bình Dương", "sports", "Sân Thể thao & Pickleball", "Bình Dương"),
 
     # 5. Phòng khám đa khoa & chuyên khoa
     ("Phòng khám Cầu Giấy Hà Nội", "clinic", "Phòng khám & Y tế", "Hà Nội"),
@@ -81,6 +103,8 @@ CRAWL_TARGETS = [
     ("Phòng khám TP Huế", "clinic", "Phòng khám & Y tế", "Huế"),
     ("Phòng khám TP Cần Thơ", "clinic", "Phòng khám & Y tế", "Cần Thơ"),
     ("Phòng khám TP Vũng Tàu", "clinic", "Phòng khám & Y tế", "Bà Rịa - Vũng Tàu"),
+    ("Phòng khám TP Nha Trang", "clinic", "Phòng khám & Y tế", "Khánh Hòa"),
+    ("Phòng khám TP Biên Hòa", "clinic", "Phòng khám & Y tế", "Đồng Nai"),
 ]
 
 DATABASE_URL = os.getenv(
