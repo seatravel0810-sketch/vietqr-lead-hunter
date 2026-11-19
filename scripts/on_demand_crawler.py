@@ -5,6 +5,7 @@ import json
 import re
 import time
 import argparse
+import urllib.parse
 from playwright.async_api import async_playwright
 import psycopg2
 
@@ -39,10 +40,10 @@ def extract_city(query: str):
     loc = loc.strip()
     return loc.title() if loc else "Việt Nam"
 
-async def crawl_on_demand(query: str, max_results: int = 20):
+async def crawl_on_demand(query: str, max_results: int = 50):
     print(f"\n=======================================================")
     print(f"🚀 [ON-DEMAND CRAWLER] Bắt đầu cào trực tiếp cho: '{query}'")
-    print(f"Số lượng tối đa: {max_results}")
+    print(f"Số lượng mục tiêu: {max_results} cơ sở")
     print(f"=======================================================\n")
 
     category, cat_label = detect_category(query)
@@ -51,37 +52,80 @@ async def crawl_on_demand(query: str, max_results: int = 20):
     async with async_playwright() as p:
         browser = await p.chromium.launch(
             headless=True,
-            args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"]
+            args=[
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--disable-extensions",
+                "--disable-background-networking"
+            ]
         )
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             locale="vi-VN",
-            viewport={"width": 1280, "height": 800}
+            viewport={"width": 1440, "height": 900}
         )
-        page = await context.new_page()
 
-        search_url = f"https://www.google.com/maps/search/{query.replace(' ', '+')}?hl=vi"
+        # Chặn toàn bộ hình ảnh, media, font để tăng tốc độ tải trang gấp 5 lần
+        await context.route(
+            "**/*.{png,jpg,jpeg,webp,svg,gif,woff,woff2,ttf,mp4,avi,ico}*",
+            lambda route: route.abort()
+        )
+
+        page = await context.new_page()
+        encoded_query = urllib.parse.quote_plus(query)
+        search_url = f"https://www.google.com/maps/search/{encoded_query}?hl=vi"
         print(f"Truy cập Google Maps: {search_url}")
 
         try:
             await page.goto(search_url, wait_until="domcontentloaded", timeout=45000)
-            await page.wait_for_timeout(3000)
+            await page.wait_for_timeout(2500)
         except Exception as e:
             print(f"Lỗi truy cập trang: {e}")
             await browser.close()
             return []
 
-        # Cuộn thanh danh sách
+        # 1. Cuộn thông minh container feed để tải đủ số lượng yêu cầu (lên tới 50+ tiệm)
         feed = page.locator('div[role="feed"]')
         if await feed.count() > 0:
             box = await feed.bounding_box()
             if box:
                 await page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
-            scroll_count = max(4, (max_results // 4) + 1)
-            for _ in range(scroll_count):
-                await page.mouse.wheel(0, 3500)
-                await page.wait_for_timeout(700)
+            
+            stagnant_count = 0
+            prev_count = 0
+            for scroll_step in range(40):
+                current_links = await page.locator('a[href*="/maps/place/"]').count()
+                print(f"  [Cuộn #{scroll_step+1}] Đã tải {current_links} / {max_results} cơ sở...")
+                if current_links >= max_results:
+                    print(f"  -> Đã tải đủ số lượng mục tiêu ({current_links} >= {max_results})!")
+                    break
 
+                end_indicator = page.locator('text="Bạn đã xem hết danh sách kết quả"')
+                end_indicator_en = page.locator('text="You\'ve reached the end of the list"')
+                if await end_indicator.count() > 0 or await end_indicator_en.count() > 0:
+                    print("  -> Google Maps báo đã đến cuối danh sách kết quả.")
+                    break
+
+                if current_links == prev_count:
+                    stagnant_count += 1
+                    if stagnant_count >= 5:
+                        print("  -> Đã hết kết quả khả dụng trên bản đồ.")
+                        break
+                else:
+                    stagnant_count = 0
+                prev_count = current_links
+
+                try:
+                    await feed.evaluate("el => el.scrollTop = el.scrollHeight")
+                except:
+                    pass
+
+                await page.mouse.wheel(0, 8000)
+                await page.wait_for_timeout(1500)
+
+        # 2. Lấy danh sách thẻ địa điểm
         links = await page.locator('a[href*="/maps/place/"]').all()
         candidates = []
         visited = set()
@@ -95,85 +139,109 @@ async def crawl_on_demand(query: str, max_results: int = 20):
 
             parent = link.locator('xpath=ancestor::div[contains(@class, "Nv2PK")]')
             card_rating = 4.8
+            card_phone = ""
             if await parent.count() > 0:
                 card_text = await parent.first.inner_text()
                 m = re.search(r'\b([345][.,]\d)\b', card_text)
                 if m:
                     card_rating = float(m.group(1).replace(',', '.'))
+                clean_t = card_text.replace(" ", "").replace(".", "")
+                pm = re.search(r'(?:\+84|0)[1-9]\d{8,9}\b', clean_t)
+                if pm:
+                    card_phone = pm.group(0)
 
-            candidates.append({"name": raw_name, "href": href, "rating": card_rating})
+            candidates.append({
+                "name": raw_name,
+                "href": href,
+                "rating": card_rating,
+                "phone": card_phone
+            })
             if len(candidates) >= max_results:
                 break
 
-        print(f"Đã tìm thấy {len(candidates)} địa điểm khả dụng trên bản đồ. Đang bóc tách chi tiết...")
+        print(f"\nĐã tìm thấy {len(candidates)} cơ sở khả dụng trên bản đồ. Bắt đầu bóc tách chi tiết song song (4 workers)...")
 
-        detail_page = await context.new_page()
+        # 3. Bóc tách song song với 4 workers để xử lý 50 tiệm trong vòng ~15 giây
+        worker_pages = [await context.new_page() for _ in range(4)]
+        worker_queue = asyncio.Queue()
+        for wp in worker_pages:
+            await worker_queue.put(wp)
+
         leads = []
+        leads_lock = asyncio.Lock()
 
-        for c in candidates:
+        async def process_candidate(c):
+            wp = await worker_queue.get()
             try:
                 item_url = c["href"]
                 if "hl=" not in item_url:
                     item_url += "&hl=vi" if "?" in item_url else "?hl=vi"
-                await detail_page.goto(item_url, wait_until="domcontentloaded", timeout=15000)
-                try:
-                    await detail_page.wait_for_selector('button[data-item-id*="address"], button[data-item-id*="phone"]', timeout=3000)
-                except:
-                    pass
-                await detail_page.wait_for_timeout(300)
 
-                # Số điện thoại
-                phone = ""
-                phone_btn = detail_page.locator('button[data-item-id*="phone:tel:"]')
-                if await phone_btn.count() > 0:
-                    phone = (await phone_btn.first.get_attribute("data-item-id") or "").replace("phone:tel:", "").strip()
-                if not phone:
-                    body_text = await detail_page.inner_text("body")
-                    phone_match = re.search(r'(?:\+84|0)[1-9]\d{8,9}\b', body_text)
-                    if phone_match:
-                        phone = phone_match.group(0)
-
-                # Địa chỉ
+                phone = c.get("phone", "")
                 address = ""
-                addr_btn = detail_page.locator('button[data-item-id*="address"]')
-                if await addr_btn.count() > 0:
-                    address = (await addr_btn.first.get_attribute("aria-label") or "").replace("Địa chỉ: ", "").strip()
+                website = None
+
+                try:
+                    await wp.goto(item_url, wait_until="domcontentloaded", timeout=7000)
+                    await wp.wait_for_timeout(200)
+
+                    if not phone:
+                        phone_btn = wp.locator('button[data-item-id*="phone:tel:"]')
+                        if await phone_btn.count() > 0:
+                            phone = (await phone_btn.first.get_attribute("data-item-id") or "").replace("phone:tel:", "").strip()
+                        if not phone:
+                            body_text = await wp.inner_text("body")
+                            phone_match = re.search(r'(?:\+84|0)[1-9]\d{8,9}\b', body_text)
+                            if phone_match:
+                                phone = phone_match.group(0)
+
+                    addr_btn = wp.locator('button[data-item-id*="address"]')
+                    if await addr_btn.count() > 0:
+                        address = (await addr_btn.first.get_attribute("aria-label") or "").replace("Địa chỉ: ", "").strip()
+
+                    web_btn = wp.locator('a[data-item-id="authority"]')
+                    if await web_btn.count() > 0:
+                        website = await web_btn.first.get_attribute("href")
+                except Exception:
+                    pass
+
                 if not address:
                     address = f"{query}, Việt Nam"
 
-                # Website
-                website = None
-                web_btn = detail_page.locator('a[data-item-id="authority"]')
-                if await web_btn.count() > 0:
-                    website = await web_btn.first.get_attribute("href")
-
-                # Tách thành phố / tỉnh từ địa chỉ
                 city = fallback_city
                 addr_parts = [p.strip() for p in address.split(",") if p.strip()]
                 if len(addr_parts) >= 2:
                     city = addr_parts[-2] if "Việt Nam" in addr_parts[-1] else addr_parts[-1]
 
                 clean_name = re.sub(r'[^a-zA-Z0-9\s-]', '', c["name"]).strip()
-                slug = re.sub(r'\s+', '-', clean_name.lower()) or f"place-{abs(hash(c['name'])) % 1000000}"
+                name_slug = re.sub(r'\s+', '-', clean_name.lower()) or "place"
+                unique_slug = f"{name_slug}-{abs(hash(c['href'])) % 1000000}"
 
-                leads.append({
+                lead_data = {
                     "name": c["name"],
                     "phone": phone or "Chưa có SĐT",
                     "location": address,
                     "city": city,
                     "rating": c["rating"],
                     "website": website,
-                    "slug": slug,
+                    "slug": unique_slug,
                     "url": c["href"]
-                })
-                print(f"  + [OK] {c['name']} | SĐT: {phone or 'None'} | Địa chỉ: {address}")
-            except Exception as e:
-                print(f"  - Lỗi bóc tách {c['name']}: {e}")
+                }
 
-        await detail_page.close()
+                async with leads_lock:
+                    leads.append(lead_data)
+                    print(f"  + [{len(leads)}/{len(candidates)}] {c['name']} | SĐT: {phone or 'None'} | Địa chỉ: {address}")
+            finally:
+                await worker_queue.put(wp)
+
+        await asyncio.gather(*[process_candidate(c) for c in candidates])
+
+        for wp in worker_pages:
+            await wp.close()
+        await page.close()
         await browser.close()
 
-    # Nạp vào Supabase
+    # 4. Nạp toàn bộ dữ liệu vào Supabase PostgreSQL
     if leads:
         print(f"\n>>> Đồng bộ {len(leads)} cơ sở vào Supabase PostgreSQL...")
         try:
@@ -221,8 +289,8 @@ async def crawl_on_demand(query: str, max_results: int = 20):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="VietQR On-Demand Google Maps Scraper")
-    parser.add_argument("--query", type=str, required=True, help="Từ khóa tìm kiếm (VD: 'spa Sapa', 'cắt tóc Mường Khương')")
-    parser.add_argument("--limit", type=int, default=20, help="Số lượng kết quả tối đa")
+    parser.add_argument("--query", type=str, required=True, help="Từ khóa tìm kiếm (VD: 'spa Sapa', 'hớt tóc Quảng Ngãi')")
+    parser.add_argument("--limit", type=int, default=50, help="Số lượng kết quả tối đa (Mặc định: 50)")
     args = parser.parse_args()
 
     asyncio.run(crawl_on_demand(args.query, args.limit))

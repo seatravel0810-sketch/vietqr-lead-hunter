@@ -106,7 +106,7 @@ export default function HomePage() {
   const handleSearchAndCrawl = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!query.trim()) {
-      alert('Vui lòng nhập từ khóa tìm kiếm (VD: Spa Cầu Giấy Hà Nội, Nha khoa Quận 1)');
+      alert('Vui lòng nhập từ khóa tìm kiếm (VD: Spa Cầu Giấy Hà Nội, Nha khoa Quận 1, Hớt tóc Quảng Ngãi)');
       return;
     }
 
@@ -131,9 +131,12 @@ export default function HomePage() {
 
       const data = await res.json();
       if (!res.ok || !data.leads || data.leads.length === 0) {
-        setEmptyQuery(query.trim());
-        setCrawledResults([]);
-        showToast(data.error || 'Chưa có sẵn dữ liệu cho khu vực này.');
+        // TỰ ĐỘNG 100%: Chưa có trong kho -> Lập tức tự động kích hoạt cào vệ tinh đám mây!
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        setIsSearching(false);
+        setScanStep(0);
+        triggerOnDemandCrawl(query.trim(), selectedLimit);
         return;
       }
 
@@ -163,53 +166,138 @@ export default function HomePage() {
     }
   };
 
-  // 1.1 KÍCH HOẠT VỆ TINH ĐÁM MÂY CÀO GOOGLE MAPS THEO YÊU CẦU
-  const handleTriggerOnDemandCrawl = async () => {
-    if (!emptyQuery) return;
+  // 1.1 TỰ ĐỘNG KÍCH HOẠT VỆ TINH ĐÁM MÂY CÀO GOOGLE MAPS THEO YÊU CẦU (100% AUTOMATED)
+  const triggerOnDemandCrawl = async (targetQuery: string, limitToCrawl: number) => {
+    setEmptyQuery(targetQuery);
     setIsTriggeringOnDemand(true);
-    setOnDemandProgress(5);
-    setOnDemandStatus('Đang kết nối vệ tinh đám mây GitHub Actions...');
+    setOnDemandProgress(8);
+    setOnDemandStatus(`Đang kết nối vệ tinh đám mây GitHub Actions để cào ${limitToCrawl} cơ sở...`);
 
     try {
       const res = await fetch('/api/crawl-on-demand', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: emptyQuery, limit: selectedLimit }),
+        body: JSON.stringify({ query: targetQuery, limit: limitToCrawl }),
       });
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Không thể gửi lệnh cào');
+        throw new Error(err.error || 'Không thể gửi lệnh cào đám mây');
       }
 
-      showToast(`Đã kích hoạt vệ tinh cào trực tiếp cho "${emptyQuery}".`);
+      showToast(`⚡ Cỗ máy vệ tinh đang tự động cào ${limitToCrawl} cơ sở Google Maps cho "${targetQuery}"...`);
 
       let currentPercent = 10;
-      const interval = setInterval(() => {
-        currentPercent += 5;
-        if (currentPercent < 40) {
-          setOnDemandStatus('Trình duyệt Playwright đang mở Google Maps & cuộn trang...');
-        } else if (currentPercent < 80) {
+      const progressTimer = setInterval(() => {
+        currentPercent += 2.5;
+        if (currentPercent < 35) {
+          setOnDemandStatus(`Playwright Chromium đang truy cập Google Maps & cuộn tìm ${limitToCrawl} tiệm...`);
+        } else if (currentPercent < 75) {
           setOnDemandStatus('Đang bóc tách số điện thoại Zalo, rating và lưu Supabase...');
         } else if (currentPercent < 95) {
-          setOnDemandStatus('Đang hoàn tất đồng bộ dữ liệu vào kho...');
+          setOnDemandStatus(`Đang hoàn tất đồng bộ ${limitToCrawl} cơ sở vào kho dữ liệu...`);
         }
         setOnDemandProgress(Math.min(95, currentPercent));
-      }, 1200);
+      }, 1000);
 
-      setTimeout(async () => {
-        clearInterval(interval);
-        setOnDemandProgress(100);
-        setOnDemandStatus('Hoàn tất! Đang tải danh sách cơ sở mới...');
+      // Thăm dò thông minh (Smart Polling): Bắt đầu kiểm tra từ giây thứ 10
+      let pollCount = 0;
+      const maxPolls = 24; // tối đa 60 giây
+      let crawlSucceeded = false;
 
-        setTimeout(async () => {
+      const pollInterval = setInterval(async () => {
+        pollCount++;
+        try {
+          const checkRes = await fetch('/api/crawler', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              query: targetQuery,
+              limit: limitToCrawl,
+              category: selectedCategory !== 'all' ? selectedCategory : undefined,
+            }),
+          });
+          const checkData = await checkRes.json();
+          if (checkRes.ok && Array.isArray(checkData.leads) && checkData.leads.length > 0) {
+            // Khi đã đạt chỉ tiêu limit hoặc đã qua 28s mà có dữ liệu thực tế
+            if (checkData.leads.length >= limitToCrawl || pollCount >= 10) {
+              clearInterval(progressTimer);
+              clearInterval(pollInterval);
+              crawlSucceeded = true;
+              setOnDemandProgress(100);
+              setOnDemandStatus(`Hoàn tất! Đã nạp thành công ${checkData.leads.length} cơ sở thật.`);
+
+              const rawLeads: Lead[] = checkData.leads.map((item: any, idx: number) => {
+                const cleanPhone = (item.phone || '').replace(/[^0-9+]/g, '');
+                const isMobile = /^(0|\+84)(9|8|7|3|5)[0-9]{8}$/.test(cleanPhone);
+                return {
+                  id: `lead-${Date.now()}-${idx}`,
+                  ...item,
+                  phoneType: isMobile ? 'mobile' : cleanPhone ? 'landline' : 'none',
+                  hasWebsite: Boolean(item.website),
+                  isDemoCreated: false,
+                  demoUrl: generateStoreDemoUrl(item),
+                };
+              });
+
+              setTimeout(() => {
+                setIsTriggeringOnDemand(false);
+                setEmptyQuery(null);
+                setCrawledResults(rawLeads);
+                showToast(`Radar đã quét thành công ${rawLeads.length} cơ sở thật hôm nay!`);
+              }, 600);
+              return;
+            }
+          }
+        } catch {}
+
+        if (pollCount >= maxPolls && !crawlSucceeded) {
+          clearInterval(progressTimer);
+          clearInterval(pollInterval);
+          try {
+            const finalRes = await fetch('/api/crawler', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                query: targetQuery,
+                limit: limitToCrawl,
+                category: selectedCategory !== 'all' ? selectedCategory : undefined,
+              }),
+            });
+            const finalData = await finalRes.json();
+            if (finalRes.ok && Array.isArray(finalData.leads) && finalData.leads.length > 0) {
+              const rawLeads: Lead[] = finalData.leads.map((item: any, idx: number) => {
+                const cleanPhone = (item.phone || '').replace(/[^0-9+]/g, '');
+                const isMobile = /^(0|\+84)(9|8|7|3|5)[0-9]{8}$/.test(cleanPhone);
+                return {
+                  id: `lead-${Date.now()}-${idx}`,
+                  ...item,
+                  phoneType: isMobile ? 'mobile' : cleanPhone ? 'landline' : 'none',
+                  hasWebsite: Boolean(item.website),
+                  isDemoCreated: false,
+                  demoUrl: generateStoreDemoUrl(item),
+                };
+              });
+              setCrawledResults(rawLeads);
+              showToast(`Radar đã quét thành công ${rawLeads.length} cơ sở thật hôm nay!`);
+            } else {
+              showToast('Google Maps không có thêm dữ liệu cho khu vực này.');
+            }
+          } catch {}
           setIsTriggeringOnDemand(false);
-          await handleSearchAndCrawl();
-        }, 1500);
-      }, 25000);
+          setEmptyQuery(null);
+        }
+      }, 2500);
     } catch (err: any) {
       alert('Lỗi kích hoạt cào tự động: ' + err.message);
       setIsTriggeringOnDemand(false);
+      setEmptyQuery(null);
+    }
+  };
+
+  const handleTriggerOnDemandCrawl = async () => {
+    if (emptyQuery) {
+      await triggerOnDemandCrawl(emptyQuery, selectedLimit);
     }
   };
 
@@ -700,53 +788,40 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* 4.5 ON-DEMAND REALTIME SATELLITE CRAWLER CARD */}
-      {emptyQuery && crawledResults.length === 0 && !isSearching && (
+      {/* 4.5 ON-DEMAND REALTIME SATELLITE CRAWLER CARD (100% AUTOMATED) */}
+      {(emptyQuery || isTriggeringOnDemand) && crawledResults.length === 0 && !isSearching && (
         <section className="max-w-3xl mx-auto px-4 py-8">
           <div className="glass-panel rounded-3xl border border-blue-200/90 bg-white/95 p-6 sm:p-8 text-center shadow-lg">
             <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xs">
-              <Sparkles className="w-7 h-7 text-amber-500 animate-pulse" />
+              <Zap className="w-7 h-7 text-amber-500 animate-pulse" />
             </div>
             
             <h3 className="font-extrabold text-lg text-slate-900 mb-2">
-              Khu vực &quot;{emptyQuery}&quot; chưa có sẵn trong kho dữ liệu
+              ⚡ Đang tự động cào trực tiếp từ Google Maps cho &quot;{emptyQuery}&quot;
             </h3>
             
             <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto mb-6 leading-relaxed">
-              Bạn có muốn kích hoạt cỗ máy vệ tinh đám mây để bóc tách trực tiếp số điện thoại Zalo, địa chỉ và rating của các cơ sở tại <b>&quot;{emptyQuery}&quot;</b> từ Google Maps ngay bây giờ không?
+              Hệ thống phát hiện khu vực này chưa có sẵn trong kho, đang điều động vệ tinh đám mây Playwright để cào và bóc tách ngay lập tức <b>{selectedLimit} cơ sở kinh doanh thật</b> từ Google Maps Live...
             </p>
 
-            {isTriggeringOnDemand ? (
-              <div className="space-y-4 max-w-md mx-auto p-4 rounded-2xl bg-blue-50/70 border border-blue-100">
-                <div className="flex items-center justify-center gap-2.5 text-blue-700 font-extrabold text-xs sm:text-sm">
-                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                  <span>{onDemandStatus}</span>
-                </div>
-                
-                {/* Progress bar */}
-                <div className="w-full bg-slate-200/80 rounded-full h-2.5 overflow-hidden border border-slate-200">
-                  <div
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2.5 transition-all duration-700 rounded-full"
-                    style={{ width: `${onDemandProgress}%` }}
-                  />
-                </div>
-                
-                <p className="text-[11px] text-slate-500 font-medium">
-                  Máy chủ Ubuntu Cloud đang mở Playwright Chromium quét trực tiếp Google Maps... (~25 giây)
-                </p>
+            <div className="space-y-4 max-w-md mx-auto p-4 rounded-2xl bg-blue-50/70 border border-blue-100">
+              <div className="flex items-center justify-center gap-2.5 text-blue-700 font-extrabold text-xs sm:text-sm">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                <span>{onDemandStatus}</span>
               </div>
-            ) : (
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleTriggerOnDemandCrawl}
-                  className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition active:scale-95 cursor-pointer inline-flex items-center justify-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4 text-amber-300" />
-                  <span>⚡ Kích hoạt Cào Trực Tiếp Google Maps Ngay</span>
-                </button>
+              
+              {/* Progress bar */}
+              <div className="w-full bg-slate-200/80 rounded-full h-2.5 overflow-hidden border border-slate-200">
+                <div
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2.5 transition-all duration-700 rounded-full"
+                  style={{ width: `${onDemandProgress}%` }}
+                />
               </div>
-            )}
+              
+              <p className="text-[11px] text-slate-500 font-medium">
+                Máy chủ Ubuntu Cloud đang mở Playwright Chromium quét trực tiếp Google Maps...
+              </p>
+            </div>
           </div>
         </section>
       )}

@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const query = (body.query || '').trim();
-    const limit = Math.min(Math.max(Number(body.limit) || 20, 1), 50);
+    const limit = Math.min(Math.max(Number(body.limit) || 50, 1), 50);
 
     if (!query) {
       return NextResponse.json(

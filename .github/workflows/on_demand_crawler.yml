@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       query:
-        description: 'Từ khóa tìm kiếm (Ví dụ: "cắt tóc Mường Khương", "spa Sapa", "nha khoa Sóc Trăng")'
+        description: 'Từ khóa tìm kiếm (Ví dụ: "hớt tóc Quảng Ngãi", "spa Sa Pa", "nha khoa Sóc Trăng")'
         required: true
         type: string
       limit:
-        description: 'Số lượng kết quả cần lấy (Mặc định: 20)'
+        description: 'Số lượng kết quả cần lấy (Mặc định: 50)'
         required: false
-        default: '20'
+        default: '50'
         type: string
 
 jobs:

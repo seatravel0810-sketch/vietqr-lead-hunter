@@ -4,7 +4,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const query = (body.query || '').trim();
-    const limit = Math.min(Math.max(Number(body.limit) || 20, 5), 50);
+    const limit = Math.min(Math.max(Number(body.limit) || 50, 5), 50);
 
     if (!query) {
       return NextResponse.json({ error: 'Vui lòng cung cấp từ khóa cần cào' }, { status: 400 });
